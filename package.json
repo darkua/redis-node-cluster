@@ -1,0 +1,23 @@
+{
+  "name": "redis-node-cluster",
+  "version": "0.0.1",
+  "description": "Redis Cluster client work in progress ",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --recursive --bail --reporter spec test",
+    "rt-test": "mocha --recursive --watch --bail --reporter min test",
+    "jshint-lib": "jshint lib/*.js",
+    "jshint-test": "jshint test/*.js"
+  },
+  "dependencies": {
+    "redis": "~0.10.1",
+    "extend": "~1.2.1"
+  },
+  "devDependencies": {
+    "mocha": "~1.17.1",
+    "async": "~0.2.10",
+    "should": "~3.3.1"
+  },
+  "author": "sergio@relayr.io",
+  "license": "MIT"
+}
