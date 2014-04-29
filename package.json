@@ -5,13 +5,14 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --recursive --bail --reporter spec test",
-    "rt-test": "mocha --recursive --watch --bail --reporter min test",
+    "ci": "mocha --recursive --watch --bail --reporter min test",
     "jshint-lib": "jshint lib/*.js",
     "jshint-test": "jshint test/*.js"
   },
   "dependencies": {
     "redis": "~0.10.1",
-    "extend": "~1.2.1"
+    "extend": "~1.2.1",
+    "eventemitter2": "~0.4.13"
   },
   "devDependencies": {
     "mocha": "~1.17.1",

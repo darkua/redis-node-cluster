@@ -10,8 +10,9 @@ var async = require("async");
 **/
 
 describe('Redis cluster', function(){
-  
-  var redisNodes = config.redisNodes,rc=null;
+  var rc = null;
+  console.log(rc);
+  var redisNodes = config.redisNodes;
   var fakeNodes = [
       {host:'localhost',port:8000},
       {host:'localhost',port:8001},
@@ -25,6 +26,7 @@ describe('Redis cluster', function(){
 
   afterEach(function(){
     rc.disconnect();
+    //console.log('disconnected',rc);
   })
   
   it('should be emiting a ready event',function(done){
@@ -65,7 +67,8 @@ describe('Redis cluster', function(){
       clearImmediate(sucess);
       done(err);
     };
-    var sucess = setImmediate(done);
+    var sucess = setImmediate.bind(null,done);
+
     async.parallel([
       function(callback){
           rc.set(["foo","bar"],callback);
@@ -80,10 +83,11 @@ describe('Redis cluster', function(){
           rc.set(["foo","bar"]);
           rc.set("foo","bar");
           sucess();
-        }else
-          done(err);
+        }else{
+          console.log('ERR',err);
+        }
     });
-  })
+  });
 
   it('should queue commands sent before ready event',function(done){
     rc.cluster_ready.should.be.false;
@@ -116,7 +120,7 @@ describe('Redis cluster', function(){
       if(err)done();
     });
   });
-
+  
   it('should cache the slot',function(done){
     rc.on('ready',function () {
         console.log('RC1 ready',rc.startup_nodes);
@@ -156,4 +160,69 @@ describe('Redis cluster', function(){
       done();
     });
   });
+  it("should be disconnected from the cluster",function(done){
+    rc.disconnect();
+    setImmediate(function(){
+      rc.connections.should.be.empty;
+      rc.slots.should.be.empty;
+      assert.ok(rc.sub_conn == null);
+      rc.startup_nodes.should.be.empty;
+      rc.cluster_ready.should.be.false;
+      done();
+    });
+  });
+
+  it('should be subscribing,publishing, and unsubscribing',function(done){
+    var topic1 = "/s/1/data";
+    var i = 0;
+    var max = 10000;
+    
+    //each message event
+    rc.on('message',function (channel, message) {
+      if(message=="fail")
+        assert.fail("This message should not be received, unsubscribe fail!");
+      if(message==max){
+        rc.unsubscribe(topic1,function(err,topic){
+          console.log(message,'messages, published in ',topic,'UNSCRIBED NOW!');
+          rc.publish(topic1,'fail');
+          done();
+        });
+      }
+    });  
+    
+    //publish messages on topic1
+    rc.subscribe(topic1,function(err,topic){
+      console.log("SUBSCRIBED TO TOPIC, start publishing!",topic);
+      for (i; i <=max; i++) {
+        rc.publish(topic1,i);
+      };
+    });
+  });
+
+  it('should be psubscribing,publishing, and punsubscribing',function(done){
+    var allSensors = "/ss/*/data";
+    var i = 0;
+    var max = 10;
+    
+    //each message event
+    rc.on('pmessage',function (p,t, m) {
+      console.log('pattern',p,"topic",t,"message",m);
+      if(m=="fail")
+        assert.fail("This message should not be received, unsubscribe fail!");
+      if(m==max)
+        done();
+    });  
+    
+    //publish messages on topic1
+    rc.psubscribe(allSensors);
+    rc.on('psubscribe',function(p,t,c){
+      console.log('subscribed to pattern',p,"topic",t,"count",c);
+      rc.publish("/ss/1/info",'fail');
+      for (i; i <=max; i++) {
+        var t = "/ss/"+i+"/data";
+        rc.publish(t,i);
+      };
+    });
+  });
+
 });
