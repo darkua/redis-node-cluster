@@ -9,6 +9,11 @@
     "jshint-lib": "jshint lib/*.js",
     "jshint-test": "jshint test/*.js"
   },
+  "pre-commit": [
+    "jshint-lib",
+    "jshint-test",
+    "test"
+  ],
   "dependencies": {
     "redis": "~0.10.1",
     "extend": "~1.2.1",
