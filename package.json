@@ -10,19 +10,17 @@
     "jshint-test": "jshint test/*.js"
   },
   "pre-commit": [
-    "jshint-lib",
-    "jshint-test",
     "test"
   ],
   "dependencies": {
     "redis": "~0.10.1",
-    "extend": "~1.2.1",
-    "eventemitter2": "~0.4.13"
+    "extend": "~1.2.1"
   },
   "devDependencies": {
     "mocha": "~1.17.1",
     "async": "~0.2.10",
-    "should": "~3.3.1"
+    "should": "~3.3.1",
+    "pre-commit": "0.0.7"
   },
   "author": "sergio@relayr.io",
   "license": "MIT"
