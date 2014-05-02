@@ -4,6 +4,7 @@ var should = require('should');
 var RedisCluster = require("../lib/cluster").Cluster;
 var config = require("../config");
 var async = require("async");
+var fs = require("fs");
 
 /**
   #TODO TEST CLUSTERDOWN!!! 
@@ -21,7 +22,7 @@ describe('Redis cluster', function(){
 
   beforeEach(function(){
     console.log('execute before each?');
-    rc = new RedisCluster(redisNodes); 
+    rc = new RedisCluster(redisNodes,{redis:{detect_buffers:true}}); 
   });
 
   afterEach(function(){
@@ -223,6 +224,21 @@ describe('Redis cluster', function(){
         rc.publish(t,i);
       };
     });
+  });
+
+  it("should publish a binary payload into redis-cluster", function(done) {
+    
+    var expected = fs.readFileSync(__dirname + "/image.jpg");
+    rc.on('message',function(channel,message){
+      console.log('message',channel,message);
+      assert.ok(message.toString('utf8'),expected.toString('utf8')); 
+      done();
+    });
+    
+    rc.subscribe("image", function() {
+      rc.publish(["image", expected]);
+    });
+
   });
 
 });
