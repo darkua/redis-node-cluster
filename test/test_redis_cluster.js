@@ -176,7 +176,7 @@ describe('Redis cluster', function(){
   it('should be subscribing,publishing, and unsubscribing',function(done){
     var topic1 = "/s/1/data";
     var i = 0;
-    var max = 10000;
+    var max = 1;
     
     //each message event
     rc.on('message',function (channel, message) {
@@ -203,7 +203,7 @@ describe('Redis cluster', function(){
   it('should be psubscribing,publishing, and punsubscribing',function(done){
     var allSensors = "/ss/*/data";
     var i = 0;
-    var max = 10;
+    var max = 1;
     
     //each message event
     rc.on('pmessage',function (p,t, m) {
