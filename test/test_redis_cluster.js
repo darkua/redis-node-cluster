@@ -27,8 +27,7 @@ describe('Redis cluster', function(){
 
   afterEach(function(){
     rc.disconnect();
-    //console.log('disconnected',rc);
-  })
+  });
   
   it('should be emiting a ready event',function(done){
     
@@ -110,7 +109,6 @@ describe('Redis cluster', function(){
 
   it('should try all "fake nodes" with get_random_connection and fail',function(done){
     var rc1 = new RedisCluster(fakeNodes);
-    // console.log('RC',rc);
     
     rc1.on('ready',function(){
       assert.fail('Cluster should not be ready!'); 
@@ -122,6 +120,17 @@ describe('Redis cluster', function(){
     });
   });
   
+  it("should hash keyslot correctly with hash key, using {}",function(){
+    var k1 = rc.keyslot("abc:d");
+    var k2 = rc.keyslot("{abc:d}");
+    var k3 = rc.keyslot("{abc:d}:12312454");
+    var k4 = rc.keyslot("{}abc:d}:12312454");
+    
+    k1.should.be.eql(k2)
+    k2.should.be.eql(k3);
+    k3.should.not.be.eql(k4);
+  });
+
   it('should cache the slot',function(done){
     rc.on('ready',function () {
         console.log('RC1 ready',rc.startup_nodes);
@@ -162,8 +171,7 @@ describe('Redis cluster', function(){
     });
   });
   it("should be disconnected from the cluster",function(done){
-    rc.disconnect();
-    setImmediate(function(){
+    rc.disconnect(function(){
       rc.connections.should.be.empty;
       rc.slots.should.be.empty;
       assert.ok(rc.sub_conn == null);
@@ -172,6 +180,19 @@ describe('Redis cluster', function(){
       done();
     });
   });
+  /*#todo accept commands that execute in ALL connected instances!
+  it('should be accepting empty key commands',function(done){
+    var topic1 = "/s/1/data";
+    rc.hset(['foo','bar','fubar'],function(){
+      rc.flushdb(function(){
+        console.log('db flushed!');
+        rc.hget(["foo","bar"],function(err,res){
+          assert.ok(res == null)
+        })
+      })
+    })
+    
+  })*/
 
   it('should be subscribing,publishing, and unsubscribing',function(done){
     var topic1 = "/s/1/data";
@@ -193,7 +214,7 @@ describe('Redis cluster', function(){
     
     //publish messages on topic1
     rc.subscribe(topic1,function(err,topic){
-      console.log("SUBSCRIBED TO TOPIC, start publishing!",topic);
+      console.log("SUBSCRIBED TO TOPIC, start publishing!",topic,rc.sub_conn.port);
       for (i; i <=max; i++) {
         rc.publish(topic1,i);
       };
@@ -226,6 +247,30 @@ describe('Redis cluster', function(){
     });
   });
 
+
+  it('should be subscribing two different topics on same connection',function(done){
+    var topics = ["/s/1/data","/s/2/data"]
+    var t = topics.slice(0);
+
+    rc.on('message',function (channel, message) {
+      var i = t.indexOf(channel);
+      if(i > -1){
+        t.splice(i,1)
+        rc.unsubscribe(channel);
+      }
+      
+      if(t.length==0){
+        done();
+      }
+    });  
+    
+    topics.forEach(function(t){
+      rc.subscribe(t,function(){
+        rc.publish(t,'1')
+      });  
+    })
+  });
+
   it("should publish a binary payload into redis-cluster", function(done) {
     
     var expected = fs.readFileSync(__dirname + "/image.jpg");
@@ -239,6 +284,24 @@ describe('Redis cluster', function(){
       rc.publish(["image", expected]);
     });
 
+  });
+
+  it("should be supporting any type of command",function(done){
+    rc.time(function(err,res){
+      assert.ok(err==null);
+      res.should.be.instanceof(Array).and.have.lengthOf(2);
+      done();
+    });
+  });
+  
+  it("should be supporting all type of command",function(done){
+    rc.flushdb(function(err,res){
+      assert.ok(res.every(function(x){return x =="OK"}))
+      rc.dbsize(function(err,res){
+        assert.ok(res.every(function(x){return x =="0"}))
+        done();
+      })
+    });
   });
 
 });
