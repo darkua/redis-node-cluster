@@ -304,4 +304,22 @@ describe('Redis cluster', function(){
     });
   });
 
+  it("should support arrays as parameters",function(done){
+    var topics = ["/s/*","/c/*"];
+    rc.sadd(["foo:pub",topics],function(err,res){
+      assert.ok(err == null);
+      assert.ok(res == topics.length);
+      done();
+    })
+  })
+
+  it("should support Multiple SET",function(done){
+    var ids = ["foo",1];
+    rc.HMSET(["foo","bla",1,"pau",2],function(err,res){
+      assert.ok(err == null);
+      assert.ok(res == "OK");
+      done();
+    })
+  })
+
 });
