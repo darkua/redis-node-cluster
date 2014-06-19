@@ -106,19 +106,6 @@ describe('Redis cluster', function(){
     //change startup_nodes to check failing
     rc1.slots.should.be.empty;
   });
-
-  it('should try all "fake nodes" with get_random_connection and fail',function(done){
-    var rc1 = new RedisCluster(fakeNodes);
-    
-    rc1.on('ready',function(){
-      assert.fail('Cluster should not be ready!'); 
-    });
-
-    rc1.get_random_connection(function(err,c){
-      console.log('get_random_connection',err,c);
-      if(err)done();
-    });
-  });
   
   it("should hash keyslot correctly with hash key, using {}",function(){
     var k1 = rc.keyslot("abc:d");
